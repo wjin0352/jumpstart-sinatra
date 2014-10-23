@@ -1,4 +1,5 @@
 source 'https://rubygems.org'
+
 gem 'sinatra', "1.3.2"
 gem "slim"
 gem "sass"
@@ -20,15 +21,13 @@ gem 'do_postgres'
 # 	gem "cucumber", "1.2.1"
 # end
 
-
 	gem "dm-postgres-adapter" 
 	# gem "dm-sqlite-adapter", :group => :development
 
+gem "pg"
+gem "dm-postgres-adapter"
 
-
-	gem "pg"
-	gem "dm-postgres-adapter"
-
+gem 'did_you_mean', group: [:development, :test]
 
 
 

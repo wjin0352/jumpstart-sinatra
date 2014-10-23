@@ -5,6 +5,7 @@ require 'slim'
 require 'sass'
 require 'do_postgres'
 require './song'
+require 'did_you_mean'
 
 # Code inside this block is run only once at startup. 
 # You can have as many configure blocks as you like in a 
