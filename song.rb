@@ -52,8 +52,27 @@ DataMapper.finalize
 # and then automatically update it if we change anything
 # http://datamapper.org/getting-started.html
 
+module SongHelpers
+	# fetches all songs
+	def find_songs
+		@songs = Song.all  
+	end
+	# finds particular song in db using :id
+	def find_song
+		Song.get(params[:id])
+	end
+	# instantiates new Song object using attributes in params[:song] hash
+	def create_song
+		@song = Song.create(params[:song])
+	end
+end
+# register these methods as helper methods
+helpers SongHelpers
+
+
 get '/songs' do
-	@songs = Song.all
+	# @songs = Song.all
+	find_songs
 	slim :songs
 end
 
@@ -65,28 +84,39 @@ end
 
 
 get '/songs/:id' do
-  @song = Song.get(params[:id])
+  # @song = Song.get(params[:id])
+  @song = find_song
   slim :show_song
 end
 
 get '/songs/:id/edit' do
-	@song = Song.get(params[:id])
+	# @song = Song.get(params[:id])
+	@song = find_song
 	slim :edit_song
 end
 
 post '/songs' do
-	song = Song.create(params[:song])
-	redirect to("/songs/#{song.id}")
+	flash[:notice] = "Great job, song successfuly added!" if create_song
+	redirect to("/songs/#{@song.id}")
+	# song = Song.create(params[:song])
+	# create_song
 end
 
 put '/songs/:id' do
-	song = Song.get(params[:id])
-	song.update(params[:song])
+	# song = Song.get(params[:id])
+	protected!
+	song = find_song
+	if song.update(params[:song])
+		flash[:notice] = "Song successfully updated"
+	end
 	redirect to("/songs/#{song.id}")
 end
 
 delete '/songs/:id' do
-	Song.get(params[:id]).destroy
+	# Song.get(params[:id]).destroy
+	if find_song.destroy
+		flash[:notice] = "Song deleted"
+	end
 	redirect to('/songs')
 end
 

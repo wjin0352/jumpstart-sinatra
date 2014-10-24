@@ -6,6 +6,8 @@ require 'sass'
 require 'do_postgres'
 require './song'
 require 'did_you_mean'
+require 'sinatra/flash'
+require 'pony'
 
 # Code inside this block is run only once at startup. 
 # You can have as many configure blocks as you like in a 
@@ -14,9 +16,13 @@ require 'did_you_mean'
 # near the start of a file
 
 configure :development do
-# DataMapper.setup(:default, 'postgres://localhost/sinatraapp1') 
+# DataMapper.setup(:default, 'postgres://localhost/mydb') 
 # DataMapper.finalize.auto_upgrade!
 DataMapper.setup(:default, ENV['DATABASE_URL'] || 'postgres://localhost/mydb')
+	set :email_address => 'smtp.gmail.com',
+      :email_user_name => 'daz',
+      :email_password => 'secret',
+      :email_domain => 'localhost.localdomain'
  end
 # To get postgres working locally I had to redownload postgres using postgres.app
 # then make sure the paths were correct!!! and check good install
@@ -53,12 +59,59 @@ end
 
 configure :production do
 DataMapper.setup(:default, ENV['DATABASE_URL'] || "postgres://localhost/[HEROKU_POSTGRESQL_AQUA_URL]")
+	set :email_address => 'smtp.sendgrid.net',
+      :email_user_name => ENV['SENDGRID_USERNAME'],
+      :email_password => ENV['SENDGRID_PASSWORD'],
+      :email_domain => 'heroku.com'
 end
 
 # IMPORTANT NOTE!: YOU MUST AUTOMIGRATE THIS FIRST BY to create our db tables
 # on the terminal, heroku run console, require './main', DataMapper.auto_migrate!
 
 # : heroku logs to find errors, usually if your connected to db, you just need to migrate the data.
+
+def set_title
+  @title ||= "Songs By Sinatra"
+end
+
+before do
+	set_title
+end
+
+helpers do
+	def css(*stylesheets) #  * before stylesheets signifies any number of arguments
+		stylesheets.map do |stylesheet|
+			"<link href=\"/#{stylesheet}.css\" media=\"screen, projection\" rel=\"stylesheet\" />"
+		end.join
+	end
+
+	def current?(path='/')
+		(request.path==path || request.path==path+'/') ? "current" : nil
+	end
+
+	def send_message
+  	Pony.mail(
+			:from => params[:name] + "<" + params[:email] + ">", 
+			:to => 'wjin0352@gmail.com',
+			:subject => params[:name] + " has contacted you", 
+			:body => params[:message],
+    	:port => '587',
+    	:via => :smtp,
+    	:via_options => {
+				:address 									=> 'smtp.gmail.com', 
+				:port 										=> '587', 
+				:enable_starttls_auto 		=> true,
+	      :user_name								=> 'none',
+	      :password									=> 'secret',
+	      :authentication						=> :plain,
+	      :domain										=> 'localhost.localdomain'
+		}) 
+	end
+
+end
+
+
+
 
 get('/styles.css'){ scss :styles }
 
@@ -115,9 +168,11 @@ get '/get/hello' do
 	"Hello #{session[:name]}"
 end
 
-# we enabled sessions in the config block above, now we need a login route handler that 
-# displays a view called login that contains a form to be submitted.
-
+post '/contact' do
+	send_message
+	flash[:notice] = "Thanks for the message, we'll be in touch."
+	redirect to('/')
+end
 
 
 
