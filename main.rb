@@ -129,10 +129,6 @@ get '/about' do
 	slim :about
 end
 
-get '/contact' do
-  @title = "Contact"
-	slim :contact		
-end
 
 not_found do
   @title = "Not Found"
