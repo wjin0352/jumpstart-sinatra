@@ -8,6 +8,7 @@ require './song'
 require 'did_you_mean'
 require 'sinatra/flash'
 require 'pony'
+require './sinatra/auth'
 
 # Code inside this block is run only once at startup. 
 # You can have as many configure blocks as you like in a 
@@ -70,9 +71,7 @@ end
 
 # : heroku logs to find errors, usually if your connected to db, you just need to migrate the data.
 
-def set_title
-  @title ||= "Songs By Sinatra"
-end
+
 
 before do
 	set_title
@@ -89,10 +88,14 @@ helpers do
 		(request.path==path || request.path==path+'/') ? "current" : nil
 	end
 
+	def set_title
+  	@title ||= "Songs By Sinatra"
+	end
+
 	def send_message
   	Pony.mail(
 			:from => params[:name] + "<" + params[:email] + ">", 
-			:to => 'wjin0352@gmail.com',
+			:to => 'daz',
 			:subject => params[:name] + " has contacted you", 
 			:body => params[:message],
     	:port => '587',
@@ -101,11 +104,12 @@ helpers do
 				:address 									=> 'smtp.gmail.com', 
 				:port 										=> '587', 
 				:enable_starttls_auto 		=> true,
-	      :user_name								=> 'none',
+	      :user_name								=> 'daz',
 	      :password									=> 'secret',
 	      :authentication						=> :plain,
 	      :domain										=> 'localhost.localdomain'
-		}) 
+			}
+		) 
 	end
 
 end
@@ -136,9 +140,9 @@ not_found do
 end
 
 # login route handler
-get '/login' do
-	slim :login	
-end
+# get '/login' do
+# 	slim :login	
+# end
 
 # we need to create a handler to deal with a form being submitted from above
 post '/login' do
@@ -152,10 +156,10 @@ end
 
 # to log out we destroy the session variable by using clear method for session object, 
 # this router will destroy session and redirect user to login page.
-get '/logout' do
-	session.clear
-	redirect to('/login')
-end
+# get '/logout' do
+# 	session.clear
+# 	redirect to('/login')
+# end
 
 # this route grabs name entered in URL and stores it in params hash, problem is the info
 # in the params hash will be available only for that request, so we store it in session hash
@@ -164,9 +168,6 @@ get '/set/:name' do
 	session[:name] = params[:name]
 end
 
-get '/get/hello' do
-	"Hello #{session[:name]}"
-end
 
 post '/contact' do
 	send_message
